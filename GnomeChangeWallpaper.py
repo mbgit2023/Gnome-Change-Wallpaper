@@ -3,9 +3,9 @@ import os.path
 import subprocess
 from PIL import Image
 from PyQt6.QtCore import Qt, QSize, QPoint
-from PyQt6.QtGui import QIcon, QPixmap
+from PyQt6.QtGui import QIcon, QPixmap, QMouseEvent, QPainter, QColor
 from PyQt6.QtWidgets import QApplication, QFileDialog, QMainWindow, QPushButton, QWidget, QVBoxLayout, \
-    QLabel, QHBoxLayout, QGridLayout, QLayout, QFrame, QRadioButton, QButtonGroup, QScrollArea
+    QLabel, QHBoxLayout, QGridLayout, QLayout, QFrame, QRadioButton, QButtonGroup, QScrollArea, QMenu
 
 
 
@@ -14,13 +14,14 @@ class MainWindow(QMainWindow):
         super().__init__()
 
         self.setWindowTitle('Gnome Change Wallpaper')
-        self.setFixedWidth(1600)
-        self.setFixedHeight(900)
+        #self.setFixedWidth(1600)
+        #self.setFixedHeight(900)
+        self.showMaximized()
         self.setStyleSheet("background-color: #292929; color: white;")
         screen = QApplication.primaryScreen().geometry()
         point = QPoint()
-        point.setX(int((screen.width()-1600)/2))
-        point.setY(int((screen.height()-900)/2))
+        #point.setX(int((screen.width()-1600)/2))
+        #point.setY(int((screen.height()-900)/2))
         self.move(point)
 
         container = QWidget()
@@ -34,8 +35,7 @@ class MainWindow(QMainWindow):
 
         self.rightFrame = QFrame()
         self.rightFrame.setLayout(self.rightLayout)
-        self.rightFrame.setFixedWidth(1100)
-        self.rightFrame.setFixedWidth(900)
+        self.rightFrame.setFixedWidth(1300)
 
         self.scroll = QScrollArea()
         #self.scroll.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOn)
@@ -163,29 +163,70 @@ class MainWindow(QMainWindow):
 
         for file in os.listdir(folder_path):
 
-            lblImage = QLabel()
+            # "*.jpg, *.jpeg, *.png, *.webp"
+            self.lblImage = QLabel()
            # pixmap = QPixmap(rf"{folder_path}/{file}")
            # lblImage.setPixmap(pixmap.scaledToWidth(200, Qt.TransformationMode.FastTransformation))
-
+            base_width = 200
             img = Image.open(fr'{folder_path}/{file}')
-            img = img.resize((200, 200), Image.HAMMING)
+            wpercent = (base_width / float(img.size[0]))
+            hsize = int((float(img.size[1]) * float(wpercent)))
+            img = img.resize((base_width, hsize), Image.Resampling.LANCZOS)
+            #img = img.resize((200, 200), Image.HAMMING)
             img.save(fr'./Images/{file}')
 
             img = QPixmap(fr'./Images/{file}')
-            lblImage.setPixmap(img)
+            self.lblImage.setPixmap(img)
+            self.lblImage.testo = str(fr".{folder_path}/{file}")
+            #self.lblImage.setStyleSheet("border: 2px solid red;")
+            self.lblImage.mousePressEvent = self.itemClicked
 
             item = QHBoxLayout()
-            item.addWidget(lblImage)
+            item.addWidget(self.lblImage)
             self.rightLayout.addLayout(item, i, j)
 
-            if j == 4:
+            if j == 5:
                 j = 0
                 i = i + 1
             else:
                 j = j+1
 
         self.lblFolder.setText(str(folder_path))
-        self.rightFrame.setStyleSheet("background-color: #292929; border: 2px solid black; border-radius: 10px;")
+        self.rightFrame.setStyleSheet("background-color: #292929; border: 0px solid black; border-radius: 10px;")
+
+    def itemClicked(self, event):
+        if QMouseEvent.button(event) == Qt.MouseButton.RightButton:
+            filename = self.childAt(QMouseEvent.globalPosition(event).toPoint()).testo
+            self.showPopup(filename, QMouseEvent.globalPosition(event).toPoint())
+        elif QMouseEvent.button(event) == Qt.MouseButton.LeftButton:
+            pass
+
+    def showPopup(self, filename, pos):
+        self.fileimg = filename
+        self.context_menu = QMenu(self)
+        action1 = self.context_menu.addAction("Set as wallpaper")
+        action2 = self.context_menu.addAction("View")
+        action3 = self.context_menu.addAction("Delete")
+
+        action1.triggered.connect(self.setWallpaper)
+        action2.triggered.connect(self.View)
+        action3.triggered.connect(self.Delete)
+
+        self.context_menu.exec(pos)
+
+    def setWallpaper(self):
+        print(self.fileimg)
+        uri = fr"file:///{self.fileimg}"
+        print(uri)
+        p = subprocess.run(["/usr/bin/gsettings", "set", "org.gnome.desktop.background", "picture-uri", fr"'{uri}'"],
+                           capture_output=True)
+
+
+    def View(self):
+        print("VIEW")
+
+    def Delete(self):
+        print("DELETE")
 
     def apply(self):
         if self.lblFolder.text() == '':
@@ -243,6 +284,7 @@ class MainWindow(QMainWindow):
 
     def showInfo(self):
         subprocess.run(["python3", "info.py"])
+
 
 app = QApplication(sys.argv)
 window = MainWindow()

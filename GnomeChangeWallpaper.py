@@ -1,11 +1,14 @@
 import sys
 import os.path
+import requests
 import subprocess
 from PIL import Image
+from urllib.parse import urlparse
+from urllib.request import urlretrieve
 from PyQt6.QtCore import Qt, QSize, QPoint
-from PyQt6.QtGui import QIcon, QPixmap, QMouseEvent, QPainter, QColor
+from PyQt6.QtGui import QIcon, QPixmap, QMouseEvent
 from PyQt6.QtWidgets import QApplication, QFileDialog, QMainWindow, QPushButton, QWidget, QVBoxLayout, \
-    QLabel, QHBoxLayout, QGridLayout, QLayout, QFrame, QRadioButton, QButtonGroup, QScrollArea, QMenu
+    QLabel, QHBoxLayout, QGridLayout, QLayout, QFrame, QRadioButton, QButtonGroup, QScrollArea, QMenu, QLineEdit, QMessageBox, QSpinBox
 
 
 
@@ -29,7 +32,6 @@ class MainWindow(QMainWindow):
 
         # Right Layout
         self.rightLayout = QGridLayout()
-        self.rightLayout.setAlignment(Qt.AlignmentFlag.AlignTop)
         self.rightLayout.setSpacing(20)
         self.rightLayout.setSizeConstraint(QLayout.SizeConstraint.SetFixedSize)
 
@@ -41,7 +43,6 @@ class MainWindow(QMainWindow):
         #self.scroll.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOn)
         self.scroll.setWidget(self.rightFrame)
         self.scroll.setWidgetResizable(True)
-
 
         # Left Layout
         self.leftLayout = QVBoxLayout()
@@ -116,6 +117,19 @@ class MainWindow(QMainWindow):
         timeFrame = QFrame()
         timeFrame.setLayout(timeLayout)
 
+        currentConfLayout = QVBoxLayout()
+        currentConf = QLabel("Current configuration\n")
+        currentConf.setStyleSheet("font-weight: bold; font-size: 18px; margin-top: 90px;")
+        self.currentDir = QLabel()
+        self.currentTime = QLabel()
+        currentConfLayout.addWidget(currentConf)
+        currentConfLayout.addWidget(self.currentDir)
+        currentConfLayout.addWidget(self.currentTime)
+        currentConfFrame = QFrame()
+        currentConfFrame.setLayout(currentConfLayout)
+
+        self.getCurrentConf()
+
         buttonLayout = QHBoxLayout()
         btnApply = QPushButton("Apply")
         btnApply.setFixedWidth(100)
@@ -133,16 +147,17 @@ class MainWindow(QMainWindow):
 
         buttonFrame = QFrame()
         buttonFrame.setLayout(buttonLayout)
-        buttonFrame.setStyleSheet("margin-top: 160px")
+        buttonFrame.setStyleSheet("margin-top: 50px")
 
         self.leftLayout.addWidget(selectframe)
         self.leftLayout.addWidget(folderFrame)
         self.leftLayout.addWidget(timeFrame)
+        self.leftLayout.addWidget(currentConfFrame)
         self.leftLayout.addWidget(buttonFrame)
 
         self.leftFrame = QFrame()
         self.leftFrame.setLayout(self.leftLayout)
-        self.leftFrame.setFixedWidth(400)
+        self.leftFrame.setFixedWidth(450)
         self.leftFrame.setFixedHeight(900)
         self.leftFrame.setStyleSheet("background-color: #323232; color: white;")
 
@@ -150,51 +165,105 @@ class MainWindow(QMainWindow):
         layout.addWidget(self.scroll)
         layout.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
 
-        container.setLayout(layout)
+        topLayout = QHBoxLayout()
+        lblTip = QLabel("Enter an URL or select a folder")
+        lblTip.setAlignment(Qt.AlignmentFlag.AlignLeft)
+        lblTip.setFixedWidth(220)
+        lblTip.setStyleSheet("color: blue; font-weight: bold; font-size: 16px;")
+        self.lineUrl = QLineEdit()
+        self.lineUrl.setPlaceholderText("Enter the URL of the image")
+        self.lineUrl.setFixedWidth(1450)
+        self.lineUrl.setFixedHeight(25)
+        self.lineUrl.setStyleSheet("background-color: white; color: black; border-radius: 3px;")
+        downButton = QPushButton("Set as Wallpaper")
+        downButton.setFixedWidth(160)
+        downButton.clicked.connect(self.download)
+
+        topLayout.addWidget(lblTip)
+        topLayout.addWidget(self.lineUrl, Qt.AlignmentFlag.AlignLeft)
+        topLayout.addWidget(downButton, Qt.AlignmentFlag.AlignLeft)
+
+        topFrame = QFrame()
+        topFrame.setLayout(topLayout)
+
+        mainLayout = QVBoxLayout()
+        mainLayout.addWidget(topFrame)
+        mainLayout.addLayout(layout)
+
+        container.setLayout(mainLayout)
         self.setCentralWidget(container)
+
+
+    def getCurrentConf(self):
+        f = open("./changewallpaper", "r")
+        current = f.readline().split("'")
+        self.currentDir.setText(fr" Folder '{current[1]}'")
+        self.currentDir.setStyleSheet("color: white; font-weight: bold; font-size: 17px;")
+        self.currentTime.setText(fr" Change every: {current[2]}")
+        self.currentTime.setStyleSheet("color: white; font-weight: bold; font-size: 17px;")
+
 
     def get_folder(self):
         caption = "Select folder"
         initial_dir = ''
         folder_path = QFileDialog.getExistingDirectory(self, caption=caption, directory=initial_dir)
 
+        if len(os.listdir(folder_path)) == 0:
+            subprocess.run(["python3", "./popup.py", "The folder is empty", "", "red"])
+            return False
+
+        p = subprocess.run(["zsh", "./listimagefiles.sh", folder_path], capture_output=True)
+
+        if not p.returncode == 0:
+            subprocess.run(['python3', "./popup.py", "The folder doesn't contain image files", "", "red"])
+            return False
+
+        self.loadfilefromfolder(folder_path)
+
+
+    def loadfilefromfolder(self, folder_path):
+        while self.rightLayout.count():
+            child = self.rightLayout.takeAt(0)
+            if child.widget():
+                child.widget().deleteLater()
+
+        subprocess.Popen(["python3", "dolist.py", folder_path])
+
         i = 0
         j = 0
 
         for file in os.listdir(folder_path):
 
-            # "*.jpg, *.jpeg, *.png, *.webp"
-            self.lblImage = QLabel()
-           # pixmap = QPixmap(rf"{folder_path}/{file}")
-           # lblImage.setPixmap(pixmap.scaledToWidth(200, Qt.TransformationMode.FastTransformation))
-            base_width = 200
-            img = Image.open(fr'{folder_path}/{file}')
-            wpercent = (base_width / float(img.size[0]))
-            hsize = int((float(img.size[1]) * float(wpercent)))
-            img = img.resize((base_width, hsize), Image.Resampling.LANCZOS)
-            #img = img.resize((200, 200), Image.HAMMING)
-            img.save(fr'./Images/{file}')
+            included_extensions = ['jpg', 'jpeg', 'bmp', 'png', 'gif', 'webp']
+            if any(file.endswith(ext) for ext in included_extensions):
 
-            img = QPixmap(fr'./Images/{file}')
-            self.lblImage.setPixmap(img)
-            self.lblImage.testo = str(fr".{folder_path}/{file}")
-            #self.lblImage.setStyleSheet("border: 2px solid red;")
-            self.lblImage.mousePressEvent = self.itemClicked
+                self.lblImage = QLabel()
+                base_width = 200
+                img = Image.open(fr'{folder_path}/{file}')
+                wpercent = (base_width / float(img.size[0]))
+                hsize = int((float(img.size[1]) * float(wpercent)))
+                img = img.resize((base_width, hsize), Image.Resampling.LANCZOS)
+                img.save(fr'./Images/{file}')
 
-            item = QHBoxLayout()
-            item.addWidget(self.lblImage)
-            self.rightLayout.addLayout(item, i, j)
+                img = QPixmap(fr'./Images/{file}')
+                self.lblImage.setPixmap(img)
+                self.lblImage.testo = str(fr".{folder_path}/{file}")
+                self.lblImage.mousePressEvent = self.pictureClicked
 
-            if j == 5:
-                j = 0
-                i = i + 1
-            else:
-                j = j+1
+                item = QHBoxLayout()
+                item.addWidget(self.lblImage)
+                self.rightLayout.addLayout(item, i, j)
+
+                if j == 5:
+                    j = 0
+                    i = i + 1
+                else:
+                    j = j+1
 
         self.lblFolder.setText(str(folder_path))
         self.rightFrame.setStyleSheet("background-color: #292929; border: 0px solid black; border-radius: 10px;")
 
-    def itemClicked(self, event):
+    def pictureClicked(self, event):
         if QMouseEvent.button(event) == Qt.MouseButton.RightButton:
             filename = self.childAt(QMouseEvent.globalPosition(event).toPoint()).testo
             self.showPopup(filename, QMouseEvent.globalPosition(event).toPoint())
@@ -221,12 +290,77 @@ class MainWindow(QMainWindow):
         p = subprocess.run(["/usr/bin/gsettings", "set", "org.gnome.desktop.background", "picture-uri", fr"'{uri}'"],
                            capture_output=True)
 
+    def View(self, event):
+        ext = str(self.fileimg).split(".")[2]
+        name = str(self.fileimg).split(".")[1]
+        subprocess.Popen(["python3", "./viewer.py", fr"{name}.{ext}", self.lblFolder.text()])
 
-    def View(self):
-        print("VIEW")
 
     def Delete(self):
-        print("DELETE")
+        ext = str(self.fileimg).split(".")[2]
+        name = str(self.fileimg).split(".")[1]
+        filename = fr"{name}.{ext}"
+
+        dlg = QMessageBox(self)
+        dlg.setWindowTitle("Delete file")
+        dlg.setStyleSheet("background-color: #292929; color: white;")
+        dlg.setText(fr"Are you sure you want to delete the file '{filename}' from the disk?")
+        dlg.setStandardButtons(QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+        dlg.setIcon(QMessageBox.Icon.Critical)
+        button = dlg.exec()
+
+        if button == QMessageBox.StandardButton.Yes:
+            subprocess.run(["mv", filename, fr"{os.environ['HOME']}/.local/share/Trash/files"])
+            subprocess.run(["python3", "./popup.py", "The file has been moved to the Trash", "", "lightGreen"])
+        else:
+            pass
+
+    def download(self):
+        url = self.lineUrl.text()
+        if url == "":
+            subprocess.run(["python3", "popup.py", "Enter a valid URL", "", "lightGreen"])
+            return False
+
+        parsedurl = urlparse(url)
+        print(parsedurl)
+        if not parsedurl.scheme == 'http' and not parsedurl.scheme == 'https' and not parsedurl.scheme == 'ftp':
+            subprocess.run(["python3", "./popup.py", fr"The URL: {url}", "is not a valid URL", "red"])
+            return False
+
+        req = requests.get(url)
+        if not req.status_code == 200:
+            subprocess.run(["python3", "./popup.py", "Error downloading the file", fr"Server response: {req.status_code}", "red"])
+            return False
+
+        print(parsedurl.path.split("/"))
+        for name in parsedurl.path.split("/"):
+            pass
+
+        urlretrieve(url, name)
+        subprocess.run(["mv", fr"./{name}", fr"{os.environ['HOME']}/{name}"])
+
+        subprocess.run(["zsh", "./clearcrontab.sh"])
+
+        self.currentDir.setText("")
+        self.currentTime.setText("")
+
+        uri = fr"file://{os.environ['HOME']}/{name}"
+        p = subprocess.run(["/usr/bin/gsettings", "set", "org.gnome.desktop.background", "picture-uri", fr"'{uri}'"], capture_output=True)
+        q = subprocess.run(["/usr/bin/gsettings", "set", "org.gnome.desktop.background", "picture-uri-dark", fr"'{uri}'"],capture_output=True)
+
+        while self.rightLayout.count():
+            child = self.rightLayout.takeAt(0)
+            if child.widget():
+                child.widget().deleteLater()
+
+        self.lblImage = QLabel()
+        img = QPixmap(fr"{os.environ['HOME']}/{name}")
+        self.lblImage.setPixmap(img)
+        item = QHBoxLayout()
+        item.addWidget(self.lblImage)
+        self.rightLayout.addLayout(item, 0, 0)
+
+        subprocess.run(["python3", "popup.py", fr"The image: {name} ", "has been set as wallpaper", "lightGreen"])
 
     def apply(self):
         if self.lblFolder.text() == '':
@@ -280,7 +414,9 @@ class MainWindow(QMainWindow):
             os.unlink('./fileList')
 
         subprocess.Popen(["python3", "./setcron.py"])
-        subprocess.run(["python3", "./popup.py", text])
+        self.currentDir.setText(fr"Folder '{self.lblFolder.text()}'")
+        self.currentTime.setText(fr"Change every: {text}")
+        subprocess.run(["python3", "./popup.py", "The wallpaper will be updated every:", text, "lightGreen"])
 
     def showInfo(self):
         subprocess.run(["python3", "info.py"])

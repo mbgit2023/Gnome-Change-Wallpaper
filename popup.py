@@ -7,10 +7,10 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
 
-        self.setWindowTitle('Changes applied successfully')
-        self.setFixedWidth(400)
+        self.setWindowTitle('Info')
+        #self.setFixedWidth(400)
         self.setFixedHeight(150)
-        self.setStyleSheet("background-color: #292929; color: lightGreen;")
+        self.setStyleSheet(fr"background-color: #292929; color: {sys.argv[3]};")
         screen = QApplication.primaryScreen().geometry()
         point = QPoint()
         point.setX(int(screen.width()/2-200))
@@ -18,7 +18,7 @@ class MainWindow(QMainWindow):
         self.move(point)
 
         lblText = QLabel()
-        lblText.setText(fr"The wallpaper will be updated every: {sys.argv[1]}")
+        lblText.setText(fr"{sys.argv[1]} {sys.argv[2]}")
         lblText.setStyleSheet("font-size: 18px;")
         btnOk = QPushButton("Ok")
         btnOk.setFixedWidth(100)

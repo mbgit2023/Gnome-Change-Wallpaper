@@ -46,9 +46,9 @@ class MainWindow(QMainWindow):
     def prev(self):
         for name in self.imgfile.split("/"):
             pass
-
+        name = name
         current = self.list.index(name)
-        print(current)
+
         if not current == 0:
             self.imgfile = fr"{sys.argv[2]}/{self.list[current - 1]}"
         else:

@@ -16,6 +16,9 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
 
+        if not os.path.isdir("./Images"):
+            os.mkdir("./Images")
+
         self.setWindowTitle('Gnome Change Wallpaper')
         self.showMaximized()
         self.setStyleSheet("background-color: #292929; color: white;")
@@ -190,12 +193,14 @@ class MainWindow(QMainWindow):
 
     # Retrieve the current configuration from the file
     def getCurrentConf(self):
-        f = open("./changewallpaper", "r")
-        current = f.readline().split("'")
-        self.currentDir.setText(fr" Folder '{current[1]}'")
-        self.currentDir.setStyleSheet("color: white; font-weight: bold; font-size: 17px;")
-        self.currentTime.setText(fr" Change every: {current[2]}")
-        self.currentTime.setStyleSheet("color: white; font-weight: bold; font-size: 17px;")
+        if os.path.isfile("./changewallpaper"):
+            f = open("./changewallpaper", "r")
+            current = f.readline().split("'")
+            self.currentDir.setText(fr" Folder '{current[1]}'")
+            self.currentDir.setStyleSheet("color: white; font-weight: bold; font-size: 17px;")
+            self.currentTime.setText(fr" Change every: {current[2]}")
+            self.currentTime.setStyleSheet("color: white; font-weight: bold; font-size: 17px;")
+            f.close()
 
     # Select the folder's pictures
     def get_folder(self):
@@ -260,6 +265,8 @@ class MainWindow(QMainWindow):
     # Retrieve the filename of the clicked picture
     def pictureClicked(self, event):
         if QMouseEvent.button(event) == Qt.MouseButton.RightButton:
+
+            # Add a check if testo exists and is not null
             filename = self.childAt(QMouseEvent.globalPosition(event).toPoint()).testo
             self.showPopup(filename, QMouseEvent.globalPosition(event).toPoint())
         elif QMouseEvent.button(event) == Qt.MouseButton.LeftButton:
@@ -321,7 +328,6 @@ class MainWindow(QMainWindow):
             return False
 
         parsedurl = urlparse(url)
-        print(parsedurl)
         if not parsedurl.scheme == 'http' and not parsedurl.scheme == 'https' and not parsedurl.scheme == 'ftp':
             subprocess.run(["python3", "./popup.py", fr"The URL: {url}", "is not a valid URL", "red"])
             return False

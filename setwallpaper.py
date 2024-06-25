@@ -1,3 +1,5 @@
+# Set a random wallpaper from the files in the selected folder
+
 import os
 import subprocess
 

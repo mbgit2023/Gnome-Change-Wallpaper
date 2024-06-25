@@ -1,3 +1,5 @@
+# Popup window for messages from the application
+
 import sys
 from PyQt6.QtCore import Qt, QPoint
 from PyQt6.QtWidgets import QApplication, QMainWindow, QPushButton, QWidget, QVBoxLayout, QLabel

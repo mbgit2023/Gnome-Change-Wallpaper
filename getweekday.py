@@ -1,3 +1,5 @@
+# Return the weekday
+
 from datetime import datetime
 
 dt = datetime.now()

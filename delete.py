@@ -1,9 +1,9 @@
 import os
 import sys
 
-from PyQt6.QtWidgets import QApplication, QDialog, QMainWindow, QMessageBox, QPushButton
+from PyQt6.QtWidgets import QApplication, QMainWindow, QMessageBox
 
-
+# Display a confirmation dialog to delete or not the picture
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()

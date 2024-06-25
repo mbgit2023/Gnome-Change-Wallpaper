@@ -1,6 +1,7 @@
-import os.path
+# Simple image viewer
+
 import sys
-from PyQt6.QtCore import Qt, QPoint
+from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QPixmap
 from PyQt6.QtWidgets import QApplication, QMainWindow, QLabel, QHBoxLayout, QWidget, QPushButton
 
@@ -41,7 +42,7 @@ class MainWindow(QMainWindow):
         container.setLayout(layout)
         self.setCentralWidget(container)
 
-
+    # Display the previous image in the list
     def prev(self):
         for name in self.imgfile.split("/"):
             pass
@@ -58,7 +59,7 @@ class MainWindow(QMainWindow):
         self.setWindowTitle(self.imgfile)
 
 
-
+    # Display the next image in the list
     def next(self):
         for name in self.imgfile.split("/"):
             pass
@@ -72,7 +73,6 @@ class MainWindow(QMainWindow):
         self.img = QPixmap(self.imgfile)
         self.image.setPixmap(self.img)
         self.setWindowTitle(self.imgfile)
-
 
 
 if __name__ == '__main__':

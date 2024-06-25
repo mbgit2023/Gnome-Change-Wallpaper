@@ -1,24 +1,27 @@
-############################
-## GNOME CHANGE WALLPAPER ##
-##        v. 1            ##
-##       by MB1           ##
-############################
+################################
+## GNOME CHANGE WALLPAPER v.1 ##
+##          by MB1            ##
+################################
 
 1. DESCRIPTION
 
-GCW is a simple GUI to allow the user to change the background
-of the Gnome desktop at a specific interval. It sets a different
-picture each time from the selected folder.
+GCW is a simple GUI that allows the user to change the background of the Gnome desktop at a specific interval.
+It set a different image by randomly choosing it from the selected folder. It also allow the user to enter an
+URL of the image that will be downloaded and set as background.
 
-
+----------------------------------------------------------------------------------------------------------------
 2. INSTALLATION
 
-Extract the content of the archive, Make sure that all the .sh
-scripts in the folder have the execution permissions and run
+Extract the content of the archive and execute
 
-python3 gcw.py
+    ./install.sh
 
+When it is finished excecute
 
+    ./gnomechangewall.sh
+
+----------------------------------------------------------------------------------------------------------------
 3. AUTHOR
 
 MB1
+

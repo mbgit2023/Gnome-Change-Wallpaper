@@ -1,3 +1,5 @@
+# Creates a file containing the list of the image files found in the selected folder
+
 import os
 import sys
 

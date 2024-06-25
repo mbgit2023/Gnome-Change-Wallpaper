@@ -1,9 +1,9 @@
+# Popup with the about info
+
 import sys
-from PIL import Image
 from PyQt6.QtGui import QPixmap
 from PyQt6.QtCore import Qt, QPoint
-from PyQt6.QtWidgets import QApplication, QMainWindow, QPushButton, QWidget, QVBoxLayout, QLabel
-
+from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QLabel
 
 
 class MainWindow(QMainWindow):

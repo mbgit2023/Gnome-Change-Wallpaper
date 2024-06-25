@@ -5,7 +5,7 @@ import subprocess
 from PIL import Image
 from urllib.parse import urlparse
 from urllib.request import urlretrieve
-from PyQt6.QtCore import Qt, QSize, QPoint
+from PyQt6.QtCore import Qt, QSize
 from PyQt6.QtGui import QIcon, QPixmap, QMouseEvent
 from PyQt6.QtWidgets import QApplication, QFileDialog, QMainWindow, QPushButton, QWidget, QVBoxLayout, \
     QLabel, QHBoxLayout, QGridLayout, QLayout, QFrame, QRadioButton, QButtonGroup, QScrollArea, QMenu, QLineEdit, QMessageBox, QSpinBox
@@ -17,20 +17,14 @@ class MainWindow(QMainWindow):
         super().__init__()
 
         self.setWindowTitle('Gnome Change Wallpaper')
-        #self.setFixedWidth(1600)
-        #self.setFixedHeight(900)
         self.showMaximized()
         self.setStyleSheet("background-color: #292929; color: white;")
         screen = QApplication.primaryScreen().geometry()
-        point = QPoint()
-        #point.setX(int((screen.width()-1600)/2))
-        #point.setY(int((screen.height()-900)/2))
-        self.move(point)
 
         container = QWidget()
         layout = QHBoxLayout()
 
-        # Right Layout
+        # Right Layout and Frame
         self.rightLayout = QGridLayout()
         self.rightLayout.setSpacing(20)
         self.rightLayout.setSizeConstraint(QLayout.SizeConstraint.SetFixedSize)
@@ -40,11 +34,10 @@ class MainWindow(QMainWindow):
         self.rightFrame.setFixedWidth(1300)
 
         self.scroll = QScrollArea()
-        #self.scroll.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOn)
         self.scroll.setWidget(self.rightFrame)
         self.scroll.setWidgetResizable(True)
 
-        # Left Layout
+        # Left Layout and Frame
         self.leftLayout = QVBoxLayout()
         self.leftLayout.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft)
 
@@ -52,7 +45,6 @@ class MainWindow(QMainWindow):
         self.lblSelect.setStyleSheet("font-size: 19px; font-weight: bold;")
         self.btnSelect = QPushButton()
         self.btnSelect.setFixedWidth(60)
-        # self.btnSelect.setIcon(QIcon.fromTheme('folder-open'))
         self.btnSelect.setIcon(QIcon("./Icons/folder-grey.svg"))
         self.btnSelect.setIconSize(QSize(28, 28))
         self.btnSelect.clicked.connect(self.get_folder)
@@ -63,7 +55,6 @@ class MainWindow(QMainWindow):
         self.selectLayout.addWidget(self.btnSelect)
 
         selectframe = QFrame()
-        #selectframe.setStyleSheet("margin-bottom: 10px;")
         selectframe.setLayout(self.selectLayout)
 
         self.folderLayout = QHBoxLayout()
@@ -161,10 +152,12 @@ class MainWindow(QMainWindow):
         self.leftFrame.setFixedHeight(900)
         self.leftFrame.setStyleSheet("background-color: #323232; color: white;")
 
+        # Add left and right layouts to the layout
         layout.addWidget(self.leftFrame)
         layout.addWidget(self.scroll)
         layout.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
 
+        # Top layout and frame
         topLayout = QHBoxLayout()
         lblTip = QLabel("Enter an URL or select a folder")
         lblTip.setAlignment(Qt.AlignmentFlag.AlignLeft)
@@ -186,6 +179,7 @@ class MainWindow(QMainWindow):
         topFrame = QFrame()
         topFrame.setLayout(topLayout)
 
+        # Add the top frame and the layout to the main layout
         mainLayout = QVBoxLayout()
         mainLayout.addWidget(topFrame)
         mainLayout.addLayout(layout)
@@ -194,6 +188,7 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(container)
 
 
+    # Retrieve the current configuration from the file
     def getCurrentConf(self):
         f = open("./changewallpaper", "r")
         current = f.readline().split("'")
@@ -202,7 +197,7 @@ class MainWindow(QMainWindow):
         self.currentTime.setText(fr" Change every: {current[2]}")
         self.currentTime.setStyleSheet("color: white; font-weight: bold; font-size: 17px;")
 
-
+    # Select the folder's pictures
     def get_folder(self):
         caption = "Select folder"
         initial_dir = ''
@@ -220,7 +215,7 @@ class MainWindow(QMainWindow):
 
         self.loadfilefromfolder(folder_path)
 
-
+    # Load the image files from the selected folder
     def loadfilefromfolder(self, folder_path):
         while self.rightLayout.count():
             child = self.rightLayout.takeAt(0)
@@ -233,7 +228,6 @@ class MainWindow(QMainWindow):
         j = 0
 
         for file in os.listdir(folder_path):
-
             included_extensions = ['jpg', 'jpeg', 'bmp', 'png', 'gif', 'webp']
             if any(file.endswith(ext) for ext in included_extensions):
 
@@ -263,6 +257,7 @@ class MainWindow(QMainWindow):
         self.lblFolder.setText(str(folder_path))
         self.rightFrame.setStyleSheet("background-color: #292929; border: 0px solid black; border-radius: 10px;")
 
+    # Retrieve the filename of the clicked picture
     def pictureClicked(self, event):
         if QMouseEvent.button(event) == Qt.MouseButton.RightButton:
             filename = self.childAt(QMouseEvent.globalPosition(event).toPoint()).testo
@@ -270,6 +265,7 @@ class MainWindow(QMainWindow):
         elif QMouseEvent.button(event) == Qt.MouseButton.LeftButton:
             pass
 
+    # Display the popup menu
     def showPopup(self, filename, pos):
         self.fileimg = filename
         self.context_menu = QMenu(self)
@@ -283,6 +279,7 @@ class MainWindow(QMainWindow):
 
         self.context_menu.exec(pos)
 
+    # Set the selected picture as background
     def setWallpaper(self):
         print(self.fileimg)
         uri = fr"file:///{self.fileimg}"
@@ -290,12 +287,13 @@ class MainWindow(QMainWindow):
         p = subprocess.run(["/usr/bin/gsettings", "set", "org.gnome.desktop.background", "picture-uri", fr"'{uri}'"],
                            capture_output=True)
 
+    # Open the selected picture in the viewer
     def View(self, event):
         ext = str(self.fileimg).split(".")[2]
         name = str(self.fileimg).split(".")[1]
         subprocess.Popen(["python3", "./viewer.py", fr"{name}.{ext}", self.lblFolder.text()])
 
-
+    # Delete the selected picture from the hard disk
     def Delete(self):
         ext = str(self.fileimg).split(".")[2]
         name = str(self.fileimg).split(".")[1]
@@ -315,6 +313,7 @@ class MainWindow(QMainWindow):
         else:
             pass
 
+    # Download the picture file from the entered URL
     def download(self):
         url = self.lineUrl.text()
         if url == "":
@@ -362,6 +361,7 @@ class MainWindow(QMainWindow):
 
         subprocess.run(["python3", "popup.py", fr"The image: {name} ", "has been set as wallpaper", "lightGreen"])
 
+    # Apply the settings (selected folder and interval)
     def apply(self):
         if self.lblFolder.text() == '':
             self.statusLabel.setText("Select a folder")
@@ -418,6 +418,7 @@ class MainWindow(QMainWindow):
         self.currentTime.setText(fr"Change every: {text}")
         subprocess.run(["python3", "./popup.py", "The wallpaper will be updated every:", text, "lightGreen"])
 
+    # Display the about popup
     def showInfo(self):
         subprocess.run(["python3", "info.py"])
 

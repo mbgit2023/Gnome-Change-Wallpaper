@@ -1,3 +1,5 @@
+# Create the crontab file and activate it
+
 import os
 import subprocess
 import sys

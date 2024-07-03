@@ -51,11 +51,18 @@ class MainWindow(QMainWindow):
         self.btnSelect.setIcon(QIcon("./Icons/folder-grey.svg"))
         self.btnSelect.setIconSize(QSize(28, 28))
         self.btnSelect.clicked.connect(self.get_folder)
+        self.btnReload = QPushButton()
+        self.btnReload.setFixedWidth(60)
+        self.btnReload.setIcon(QIcon("./Icons/reload.png"))
+        self.btnReload.setIconSize(QSize(28, 28))
+        self.btnReload.clicked.connect(self.reload_folder)
+        self.btnReload.setDisabled(True)
 
         self.selectLayout = QHBoxLayout()
         self.selectLayout.setAlignment(Qt.AlignmentFlag.AlignLeft)
         self.selectLayout.addWidget(self.lblSelect)
         self.selectLayout.addWidget(self.btnSelect)
+        self.selectLayout.addWidget(self.btnReload)
 
         selectframe = QFrame()
         selectframe.setLayout(self.selectLayout)
@@ -208,6 +215,9 @@ class MainWindow(QMainWindow):
         initial_dir = ''
         folder_path = QFileDialog.getExistingDirectory(self, caption=caption, directory=initial_dir)
 
+        if not folder_path:
+            return False
+
         if len(os.listdir(folder_path)) == 0:
             subprocess.run(["python3", "./popup.py", "The folder is empty", "", "red"])
             return False
@@ -222,6 +232,7 @@ class MainWindow(QMainWindow):
 
     # Load the image files from the selected folder
     def loadfilefromfolder(self, folder_path):
+        os.system("sync")
         while self.rightLayout.count():
             child = self.rightLayout.takeAt(0)
             if child.widget():
@@ -261,6 +272,10 @@ class MainWindow(QMainWindow):
 
         self.lblFolder.setText(str(folder_path))
         self.rightFrame.setStyleSheet("background-color: #292929; border: 0px solid black; border-radius: 10px;")
+        self.btnReload.setDisabled(False)
+
+    def reload_folder(self):
+        self.loadfilefromfolder(self.lblFolder.text())
 
     # Retrieve the filename of the clicked picture
     def pictureClicked(self, event):
@@ -329,13 +344,19 @@ class MainWindow(QMainWindow):
 
         parsedurl = urlparse(url)
         if not parsedurl.scheme == 'http' and not parsedurl.scheme == 'https' and not parsedurl.scheme == 'ftp':
-            subprocess.run(["python3", "./popup.py", fr"The URL: {url}", "is not a valid URL", "red"])
+            subprocess.run(["python3", "popup.py", fr"The URL is not valid", "", "red"])
             return False
 
-        req = requests.get(url)
-        if not req.status_code == 200:
-            subprocess.run(["python3", "./popup.py", "Error downloading the file", fr"Server response: {req.status_code}", "red"])
+        try:
+            req = requests.get(url)
+            if not req.status_code == 200:
+                subprocess.run(["python3", "./popup.py", "Error downloading the file", fr"Server response: {req.status_code}", "red"])
+                return False
+        except:
+            subprocess.run(
+                ["python3", "./popup.py", f"Check the internet connection and try again", "", "red"])
             return False
+
 
         print(parsedurl.path.split("/"))
         for name in parsedurl.path.split("/"):
@@ -366,6 +387,7 @@ class MainWindow(QMainWindow):
         self.rightLayout.addLayout(item, 0, 0)
 
         subprocess.run(["python3", "popup.py", fr"The image: {name} ", "has been set as wallpaper", "lightGreen"])
+
 
     # Apply the settings (selected folder and interval)
     def apply(self):

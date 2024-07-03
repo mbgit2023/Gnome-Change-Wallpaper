@@ -158,7 +158,7 @@ class MainWindow(QMainWindow):
 
         self.leftFrame = QFrame()
         self.leftFrame.setLayout(self.leftLayout)
-        self.leftFrame.setFixedWidth(450)
+        self.leftFrame.setFixedWidth(430)
         self.leftFrame.setFixedHeight(900)
         self.leftFrame.setStyleSheet("background-color: #323232; color: white;")
 
@@ -259,6 +259,7 @@ class MainWindow(QMainWindow):
                 self.lblImage.setPixmap(img)
                 self.lblImage.testo = str(fr".{folder_path}/{file}")
                 self.lblImage.mousePressEvent = self.pictureClicked
+                self.lblImage.setStyleSheet("border: 1px solid #EEEEEE; border-radius: 5px;")
 
                 item = QHBoxLayout()
                 item.addWidget(self.lblImage)
@@ -271,7 +272,7 @@ class MainWindow(QMainWindow):
                     j = j+1
 
         self.lblFolder.setText(str(folder_path))
-        self.rightFrame.setStyleSheet("background-color: #292929; border: 0px solid black; border-radius: 10px;")
+        self.rightFrame.setStyleSheet("background-color: #292929; border: 0px solid black; border-radius: 10px; margin-left: 10px;")
         self.btnReload.setDisabled(False)
 
     def reload_folder(self):

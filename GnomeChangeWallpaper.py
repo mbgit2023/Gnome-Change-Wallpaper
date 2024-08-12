@@ -47,15 +47,19 @@ class MainWindow(QMainWindow):
         self.lblSelect = QLabel("Select a folder")
         self.lblSelect.setStyleSheet("font-size: 19px; font-weight: bold;")
         self.btnSelect = QPushButton()
-        self.btnSelect.setFixedWidth(60)
-        self.btnSelect.setIcon(QIcon("./Icons/folder-grey.svg"))
-        self.btnSelect.setIconSize(QSize(28, 28))
+        self.btnSelect.setFixedWidth(50)
+        self.btnSelect.setFixedHeight(30)
+        self.btnSelect.setIcon(QIcon("./Icons/folder.svg"))
+        self.btnSelect.setIconSize(QSize(24, 24))
         self.btnSelect.clicked.connect(self.get_folder)
+        self.btnSelect.setStyleSheet("margin-left: 10px;")
         self.btnReload = QPushButton()
-        self.btnReload.setFixedWidth(60)
+        self.btnReload.setFixedWidth(50)
+        self.btnReload.setFixedHeight(30)
         self.btnReload.setIcon(QIcon("./Icons/reload.png"))
-        self.btnReload.setIconSize(QSize(28, 28))
+        self.btnReload.setIconSize(QSize(24, 24))
         self.btnReload.clicked.connect(self.reload_folder)
+        self.btnReload.setStyleSheet("margin-left: 5px;")
         self.btnReload.setDisabled(True)
 
         self.selectLayout = QHBoxLayout()
@@ -118,6 +122,7 @@ class MainWindow(QMainWindow):
         timeFrame = QFrame()
         timeFrame.setLayout(timeLayout)
 
+        # Current configuration Layout
         currentConfLayout = QVBoxLayout()
         currentConf = QLabel("Current configuration\n")
         currentConf.setStyleSheet("font-weight: bold; font-size: 18px; margin-top: 90px;")
@@ -203,7 +208,7 @@ class MainWindow(QMainWindow):
         if os.path.isfile("./changewallpaper"):
             f = open("./changewallpaper", "r")
             current = f.readline().split("'")
-            self.currentDir.setText(fr" Folder '{current[1]}'")
+            self.currentDir.setText(fr" Folder: '{current[1]}'")
             self.currentDir.setStyleSheet("color: white; font-weight: bold; font-size: 17px;")
             self.currentTime.setText(fr" Change every: {current[2]}")
             self.currentTime.setStyleSheet("color: white; font-weight: bold; font-size: 17px;")
@@ -380,12 +385,12 @@ class MainWindow(QMainWindow):
             if child.widget():
                 child.widget().deleteLater()
 
-        self.lblImage = QLabel()
-        img = QPixmap(fr"{os.environ['HOME']}/{name}")
-        self.lblImage.setPixmap(img)
-        item = QHBoxLayout()
-        item.addWidget(self.lblImage)
-        self.rightLayout.addLayout(item, 0, 0)
+        # self.lblImage = QLabel()
+        # img = QPixmap(fr"{os.environ['HOME']}/{name}")
+        # self.lblImage.setPixmap(img)
+        # item = QHBoxLayout()
+        # item.addWidget(self.lblImage)
+        # self.rightLayout.addLayout(item, 0, 0)
 
         subprocess.run(["python3", "popup.py", fr"The image: {name} ", "has been set as wallpaper", "lightGreen"])
 

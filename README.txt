@@ -16,7 +16,7 @@ Extract the content of the archive and execute
 
     ./install.sh
 
-When it is finished excecute
+Launch the application
 
     ./gnomechangewall.sh
 
